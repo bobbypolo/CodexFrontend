@@ -1,0 +1,12 @@
+node_modules/
+dist/
+storybook-static/
+playwright-report/
+test-results/
+.env
+.env.local
+.env.*.local
+*.log
+*.tmp
+.DS_Store
+Thumbs.db

@@ -1,0 +1,9 @@
+import AxeBuilder from "@axe-core/playwright";
+import { expect, test } from "@playwright/test";
+
+test("home page has no detectable axe violations @a11y", async ({ page }) => {
+  await page.goto("/");
+
+  const accessibilityScanResults = await new AxeBuilder({ page }).analyze();
+  expect(accessibilityScanResults.violations).toEqual([]);
+});

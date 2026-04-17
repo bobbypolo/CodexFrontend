@@ -1,0 +1,4 @@
+name: frontend-studio
+description: Classify substantial frontend work, choose the tool path, and emit the implementation contract.
+allow_implicit_invocation: false
+entrypoint: SKILL.md

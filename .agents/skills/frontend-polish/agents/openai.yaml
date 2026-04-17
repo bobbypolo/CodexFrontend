@@ -1,0 +1,4 @@
+name: frontend-polish
+description: Run a narrow visual refinement loop for small UI adjustments.
+allow_implicit_invocation: false
+entrypoint: SKILL.md

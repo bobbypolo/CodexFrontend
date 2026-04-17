@@ -1,0 +1,73 @@
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Sora:wght@400;500;600;700;800&display=swap");
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Sora", sans-serif;
+  --font-sans: "IBM Plex Sans", sans-serif;
+
+  --color-canvas: #f5efe2;
+  --color-panel: #fffaf2;
+  --color-panel-muted: #ece2d0;
+  --color-panel-inverse: #19130f;
+  --color-ink-1: #1d1812;
+  --color-ink-2: #4d4437;
+  --color-ink-3: #7f715f;
+  --color-line: #d9cdb9;
+  --color-accent: #ef6232;
+  --color-accent-strong: #bc4318;
+  --color-teal: #126e66;
+  --color-gold: #bf8b12;
+  --color-danger: #c23a2b;
+}
+
+:root {
+  --radius-card: 30px;
+  --shadow-panel: 0 24px 80px rgba(51, 34, 20, 0.11);
+}
+
+@layer base {
+  * {
+    @apply border-line;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply min-h-screen bg-canvas font-sans text-ink-1 antialiased;
+    background-image:
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.44), rgba(255, 255, 255, 0)),
+      radial-gradient(circle at 0 0, rgba(29, 24, 18, 0.05) 1px, transparent 1px);
+    background-position: center, center;
+    background-size: auto, 24px 24px;
+  }
+
+  button,
+  [role="button"] {
+    @apply cursor-pointer;
+  }
+
+  ::selection {
+    background: rgba(239, 98, 50, 0.2);
+  }
+
+  #root {
+    min-height: 100vh;
+  }
+}
+
+@layer components {
+  .shell-panel {
+    @apply rounded-[var(--radius-card)] border border-line/70 bg-panel/82 backdrop-blur-xl;
+    box-shadow: var(--shadow-panel);
+  }
+
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/65 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas;
+  }
+
+  .label-kicker {
+    @apply text-[0.72rem] font-semibold uppercase tracking-[0.28em] text-ink-3;
+  }
+}

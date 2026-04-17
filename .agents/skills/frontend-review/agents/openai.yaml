@@ -1,0 +1,4 @@
+name: frontend-review
+description: Review visible UI changes for regressions, fidelity, and coverage.
+allow_implicit_invocation: false
+entrypoint: SKILL.md

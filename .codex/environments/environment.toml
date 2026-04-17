@@ -1,0 +1,30 @@
+version = 1
+name = "codex-frontend-workflow"
+
+[setup]
+script = "pnpm install"
+
+[[actions]]
+name = "Run"
+icon = "run"
+command = "pnpm dev --host 127.0.0.1 --port 4173"
+
+[[actions]]
+name = "Storybook"
+icon = "tool"
+command = "pnpm storybook --ci --port 6006"
+
+[[actions]]
+name = "Typecheck"
+icon = "tool"
+command = "pnpm run typecheck"
+
+[[actions]]
+name = "Build"
+icon = "tool"
+command = "pnpm run build"
+
+[[actions]]
+name = "Test"
+icon = "tool"
+command = "pnpm run test:e2e"

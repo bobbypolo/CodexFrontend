@@ -1,0 +1,177 @@
+name: Frontend Verification
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - develop
+      - 'feature/**'
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: frontend-verification-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  detect:
+    name: Detect frontend test prerequisites
+    runs-on: ubuntu-latest
+    outputs:
+      has_package_manifest: ${{ steps.detect.outputs.has_package_manifest }}
+      package_manager: ${{ steps.detect.outputs.package_manager }}
+      install_command: ${{ steps.detect.outputs.install_command }}
+      has_storybook: ${{ steps.detect.outputs.has_storybook }}
+      has_playwright: ${{ steps.detect.outputs.has_playwright }}
+      has_chromatic: ${{ steps.detect.outputs.has_chromatic }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - id: detect
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ -f package.json ]]; then
+            echo "has_package_manifest=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_package_manifest=false" >> "$GITHUB_OUTPUT"
+            echo "package_manager=none" >> "$GITHUB_OUTPUT"
+            echo "install_command=echo 'No package manifest yet; verification scaffold is waiting on the runtime layer.'" >> "$GITHUB_OUTPUT"
+            echo "has_storybook=false" >> "$GITHUB_OUTPUT"
+            echo "has_playwright=false" >> "$GITHUB_OUTPUT"
+            echo "has_chromatic=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          declared_manager="$(node -e "const pkg = JSON.parse(require('fs').readFileSync('package.json', 'utf8')); process.stdout.write(pkg.packageManager || '')")"
+          node -e "const pkg = JSON.parse(require('fs').readFileSync('package.json', 'utf8')); const all = {...(pkg.dependencies || {}), ...(pkg.devDependencies || {})}; const out = process.argv[1]; require('fs').appendFileSync(out, ['has_storybook=' + Boolean(all.storybook || all['@storybook/react-vite']), 'has_playwright=' + Boolean(all.playwright || all['@playwright/test']), 'has_chromatic=' + Boolean(all.chromatic)].join('\n') + '\n');" "$GITHUB_OUTPUT"
+
+          if [[ -f pnpm-lock.yaml || "$declared_manager" == pnpm@* ]]; then
+            echo "package_manager=pnpm" >> "$GITHUB_OUTPUT"
+            if [[ -f pnpm-lock.yaml ]]; then
+              echo "install_command=pnpm install --frozen-lockfile" >> "$GITHUB_OUTPUT"
+            else
+              echo "install_command=pnpm install --no-frozen-lockfile" >> "$GITHUB_OUTPUT"
+            fi
+          elif [[ -f yarn.lock || "$declared_manager" == yarn@* ]]; then
+            echo "package_manager=yarn" >> "$GITHUB_OUTPUT"
+            if [[ -f yarn.lock ]]; then
+              echo "install_command=yarn install --immutable" >> "$GITHUB_OUTPUT"
+            else
+              echo "install_command=yarn install" >> "$GITHUB_OUTPUT"
+            fi
+          elif [[ -f package-lock.json ]]; then
+            echo "package_manager=npm" >> "$GITHUB_OUTPUT"
+            echo "install_command=npm ci" >> "$GITHUB_OUTPUT"
+          else
+            echo "package_manager=npm" >> "$GITHUB_OUTPUT"
+            echo "install_command=npm install" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Explain scaffold-only state
+        if: steps.detect.outputs.has_package_manifest != 'true'
+        run: echo "No package manifest yet; Storybook, Playwright, and Chromatic jobs are intentionally skipped."
+
+      - name: Explain missing verification dependencies
+        if: steps.detect.outputs.has_package_manifest == 'true' && (steps.detect.outputs.has_storybook != 'true' || steps.detect.outputs.has_playwright != 'true')
+        run: echo "package.json exists but the Storybook and/or Playwright dependencies are not present yet; verification jobs are intentionally skipped until the runtime package layer adds them."
+
+  storybook-playwright:
+    name: Storybook and Playwright
+    needs: detect
+    if: needs.detect.outputs.has_package_manifest == 'true' && needs.detect.outputs.has_storybook == 'true' && needs.detect.outputs.has_playwright == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: ${{ needs.detect.outputs.package_manager }}
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: ${{ needs.detect.outputs.install_command }}
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Build Storybook
+        run: npx storybook build --output-dir storybook-static
+
+      - name: Run Playwright projects
+        run: npx playwright test
+
+      - name: Upload Playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30
+
+      - name: Upload Playwright result bundle
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: test-results/
+          retention-days: 30
+
+  chromatic:
+    name: Chromatic
+    needs:
+      - detect
+      - storybook-playwright
+    if: needs.detect.outputs.has_package_manifest == 'true' && needs.detect.outputs.has_chromatic == 'true' && needs.storybook-playwright.result == 'success' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      CHROMATIC_PROJECT_TOKEN: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
+    steps:
+      - name: Skip when token is not configured
+        if: env.CHROMATIC_PROJECT_TOKEN == ''
+        run: echo "CHROMATIC_PROJECT_TOKEN is not configured for this repository; skipping Chromatic publish."
+
+      - uses: actions/checkout@v5
+        if: env.CHROMATIC_PROJECT_TOKEN != ''
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v6
+        if: env.CHROMATIC_PROJECT_TOKEN != ''
+        with:
+          node-version: 24
+          cache: ${{ needs.detect.outputs.package_manager }}
+
+      - name: Enable Corepack
+        if: env.CHROMATIC_PROJECT_TOKEN != ''
+        run: corepack enable
+
+      - name: Install dependencies
+        if: env.CHROMATIC_PROJECT_TOKEN != ''
+        run: ${{ needs.detect.outputs.install_command }}
+
+      - name: Download Playwright archive
+        if: env.CHROMATIC_PROJECT_TOKEN != ''
+        uses: actions/download-artifact@v4
+        with:
+          name: test-results
+          path: ./test-results
+
+      - name: Publish to Chromatic
+        if: env.CHROMATIC_PROJECT_TOKEN != ''
+        uses: chromaui/action@v10
+        with:
+          projectToken: ${{ env.CHROMATIC_PROJECT_TOKEN }}
+          playwright: true
+          exitZeroOnChanges: false
+        env:
+          CHROMATIC_ARCHIVE_LOCATION: ./test-results

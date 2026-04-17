@@ -1,0 +1,4 @@
+name: frontend-build
+description: Build approved frontend work with local primitives, stories, and tests.
+allow_implicit_invocation: false
+entrypoint: SKILL.md

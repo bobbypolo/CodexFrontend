@@ -1,0 +1,88 @@
+model = "gpt-5.4"
+review_model = "gpt-5.4"
+
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+
+model_reasoning_effort = "medium"
+plan_mode_reasoning_effort = "high"
+
+project_doc_max_bytes = 65536
+project_doc_fallback_filenames = ["AGENTS.md"]
+project_root_markers = [".git"]
+
+[tools]
+view_image = true
+
+[agents]
+max_threads = 4
+max_depth = 1
+
+[features]
+multi_agent = true
+codex_hooks = false
+
+[windows]
+sandbox = "elevated"
+
+[mcp_servers.figma]
+url = "https://mcp.figma.com/mcp"
+enabled = true
+required = false
+startup_timeout_sec = 20
+tool_timeout_sec = 120
+
+[mcp_servers.shadcn]
+command = "npx"
+args = ["-y", "shadcn@latest", "mcp"]
+enabled = true
+required = false
+startup_timeout_sec = 20
+tool_timeout_sec = 120
+
+[mcp_servers.playwright]
+command = "npx"
+args = ["-y", "@executeautomation/playwright-mcp-server"]
+enabled = true
+required = false
+startup_timeout_sec = 20
+tool_timeout_sec = 180
+
+[mcp_servers.chrome_devtools]
+command = "npx"
+args = ["-y", "chrome-devtools-mcp@latest"]
+enabled = true
+required = false
+startup_timeout_sec = 20
+tool_timeout_sec = 180
+
+[mcp_servers.context7]
+command = "npx"
+args = ["-y", "@upstash/context7-mcp"]
+enabled = true
+required = false
+startup_timeout_sec = 20
+tool_timeout_sec = 120
+
+[mcp_servers.github]
+url = "https://api.githubcopilot.com/mcp/"
+bearer_token_env_var = "GITHUB_TOKEN"
+enabled = true
+required = false
+startup_timeout_sec = 20
+tool_timeout_sec = 120
+
+[mcp_servers.vercel]
+url = "https://mcp.vercel.com"
+enabled = false
+required = false
+startup_timeout_sec = 20
+tool_timeout_sec = 120
+
+[mcp_servers.magic21st]
+command = "npx"
+args = ["-y", "@21st-dev/magic@latest"]
+enabled = false
+required = false
+startup_timeout_sec = 20
+tool_timeout_sec = 120
