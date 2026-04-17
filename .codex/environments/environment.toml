@@ -2,7 +2,7 @@ version = 1
 name = "codex-frontend-workflow"
 
 [setup]
-script = "pnpm install"
+script = "node ./scripts/bootstrap-workflow.mjs"
 
 [[actions]]
 name = "Run"
@@ -20,6 +20,11 @@ icon = "tool"
 command = "pnpm run typecheck"
 
 [[actions]]
+name = "Doctor"
+icon = "tool"
+command = "pnpm run workflow:doctor"
+
+[[actions]]
 name = "Build"
 icon = "tool"
 command = "pnpm run build"
@@ -28,3 +33,13 @@ command = "pnpm run build"
 name = "Test"
 icon = "tool"
 command = "pnpm run test:e2e"
+
+[[actions]]
+name = "Visual"
+icon = "tool"
+command = "pnpm run test:e2e:visual"
+
+[[actions]]
+name = "Performance"
+icon = "tool"
+command = "pnpm run test:e2e:performance"

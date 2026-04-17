@@ -12,6 +12,7 @@ Use `$frontend-studio` for:
 - design-system changes
 - major responsive or layout work
 - Figma-driven implementation
+- any task that starts from screenshots, mocks, or state references
 
 Use `$frontend-build` when:
 - the visual direction is already approved
@@ -32,10 +33,29 @@ Use `$frontend-polish` only for:
 ## Design Source Order
 
 1. If a live Figma source exists, pull Figma MCP context first.
-2. If direction is unclear, resolve direction into `DESIGN.md` before coding.
-3. If structure is known but treatment is undecided, use 21st-style variation
+2. For visible UI work, capture reference inputs before coding:
+   - desktop and mobile screenshots where available
+   - at least one loading, empty, or error reference if the flow has those states
+   - a short manifest under `design-references/` describing the source and intended fidelity
+3. If direction is unclear, resolve direction into `DESIGN.md` before coding.
+4. If structure is known but treatment is undecided, use 21st-style variation
    exploration, then normalize the winner into local components.
-4. If the design system already has the answer, build directly.
+5. If the design system already has the answer, build directly.
+
+## Design Intake Gate
+
+Before implementation starts on visible UI work, capture a source packet with:
+- source type and canonical link or identifier
+- local reference asset paths under `design-references/<task-slug>/`
+- required state references for loading, empty, error, and responsive behavior
+- explicit fallback approval when no live design source exists yet
+
+Rules:
+- Storybook, Chromatic, and Playwright regression snapshots are verification artifacts,
+  not upstream design intake.
+- `design-explorer` should mark intake as complete or missing evidence.
+- `frontend-implementer` should not start visible UI work without an intake packet.
+- `frontend-reviewer` should fail review when the intended source cannot be defended.
 
 ## Stack Rules
 
@@ -67,13 +87,18 @@ Every shared component or user-facing flow must account for:
 ## Required Artifacts
 
 - Update `DESIGN.md` for high-impact UI work.
+- Add or update `design-references/` artifacts when the task is driven by screenshots,
+  Figma frames, or state references.
 - Add or update Storybook stories for shared components.
 - Add or update Playwright coverage for critical interactive flows.
+- Keep whole-page visual regression coverage for key surfaces, not only component stories.
+- Keep a performance budget note or test for high-visibility surfaces.
 - Leave concise verification notes in the final response after browser checks.
 
 ## Required Commands Before Completion
 
 Run these commands unless the user explicitly tells you not to:
+- `pnpm run workflow:doctor`
 - `pnpm run typecheck`
 - `pnpm run lint`
 - `pnpm run storybook:build`

@@ -44,3 +44,18 @@ For visible UI work, capture:
 - mobile layout behavior
 - focus treatment
 - one clear note about hierarchy and one clear note about density
+
+## Reference Intake
+
+For any new page, flow, or high-visibility component:
+- store screenshots, mock exports, or Figma frame references under `design-references/`
+- include at least desktop and mobile references when both exist
+- include non-happy-path references when the flow has loading, empty, or error states
+- record the intended fidelity and any deliberate deviations in a small manifest
+
+If no visual source exists yet, resolve the target direction here before implementation.
+
+## Runtime Quality Notes
+
+- Whole-page visual regression should cover the key surface in Playwright, not only Storybook stories.
+- High-visibility surfaces should carry an explicit performance budget note or Playwright budget check.

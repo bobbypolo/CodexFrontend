@@ -4,6 +4,7 @@ Use this skill when the direction is approved and the task is implementation.
 
 ## Build Rules
 
+- Start from the intake packet for visible UI work.
 - Reuse local primitives first.
 - Prefer editable source components over opaque packages.
 - Keep styling on tokens and Tailwind v4 variables.
@@ -17,6 +18,8 @@ Use this skill when the direction is approved and the task is implementation.
 - focus visibility
 - loading, empty, and error states
 - design fidelity against `DESIGN.md`
+- whole-page visual coverage when the page itself changed
+- performance budget coverage for high-visibility surfaces
 
 ## Exit Criteria
 

@@ -11,19 +11,30 @@ Codex-native frontend workspace for building, reviewing, and shipping UI with:
 ## Quick start
 
 ```bash
-pnpm install
+node ./scripts/bootstrap-workflow.mjs
 pnpm dev
 ```
 
 Quality loop:
 
 ```bash
-pnpm run typecheck
-pnpm run lint
-pnpm run build
-pnpm run storybook:build
-pnpm run test:e2e
+pnpm run verify
 ```
+
+Expected local runtime:
+
+- Node 24.x
+- Corepack enabled
+- Playwright Chromium installed through the bootstrap script
+
+## Design source intake
+
+Visible UI work should start with an intake packet, not a coding prompt alone.
+
+- Put source screenshots, mock exports, and fidelity notes under `design-references/<task-slug>/`.
+- Capture desktop and mobile references when both exist.
+- Capture loading, empty, and error references when those states matter.
+- Treat Storybook, Chromatic, and Playwright screenshots as verification outputs, not upstream design inputs.
 
 ## Codex app setup
 
@@ -66,6 +77,36 @@ Required environment variables:
 
 - `GITHUB_TOKEN` for the GitHub MCP server
 - `CHROMATIC_PROJECT_TOKEN` if you want Chromatic publish in CI
+
+The repo also ships a local doctor:
+
+```bash
+pnpm run workflow:doctor
+```
+
+It checks the workflow files, reference-intake scaffold, and visible MCP status
+when the Codex CLI is available.
+
+## Verification lanes
+
+- Storybook covers component states and review stories.
+- Playwright covers smoke, accessibility, whole-page visual regression, and performance budgets.
+- Chromatic publishes Storybook snapshots when the token is configured. It is a
+  publish lane, not the only visual gate.
+
+Useful commands:
+
+```bash
+pnpm run test:e2e:visual
+pnpm run test:e2e:performance
+```
+
+Supported Playwright overrides:
+
+- `PLAYWRIGHT_SKIP_WEBSERVER=1`
+- `PLAYWRIGHT_STORYBOOK_COMMAND="..."`
+- `PLAYWRIGHT_APP_COMMAND="..."`
+- `STORYBOOK_URL=http://127.0.0.1:6006`
 
 ## GitHub Pages deploy
 

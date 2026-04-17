@@ -28,4 +28,11 @@ export default tseslint.config(
       ],
     },
   },
+  {
+    files: ["scripts/**/*.{js,mjs}", "*.config.{js,mjs}"],
+    languageOptions: {
+      ecmaVersion: "latest",
+      globals: globals.node,
+    },
+  },
 );
