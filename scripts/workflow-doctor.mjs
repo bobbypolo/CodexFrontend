@@ -1,4 +1,4 @@
-import { existsSync, readdirSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { execFileSync, spawn } from "node:child_process";
 
@@ -32,9 +32,88 @@ const optionalEnvVars = [
 ];
 
 const results = [];
+const requiredSkillPaths = requiredPaths.filter((candidate) =>
+  candidate.startsWith(".agents/skills/"),
+);
+const agentRolePaths = [
+  ".codex/agents/design-explorer.toml",
+  ".codex/agents/frontend-implementer.toml",
+  ".codex/agents/frontend-reviewer.toml",
+];
+const expectedEnabledMcpServers = new Set([
+  "chrome_devtools",
+  "context7",
+  "figma",
+  "github",
+  "playwright",
+  "shadcn",
+]);
+const expectedDisabledMcpServers = new Set([
+  "arxiv",
+  "browserbase",
+  "crossref",
+  "exa",
+  "firecrawl",
+  "magic21st",
+  "openalex",
+  "postgres",
+  "sentry",
+  "vercel",
+]);
 
 function push(level, label, detail) {
   results.push({ level, label, detail });
+}
+
+function validateSkillFrontmatter(relativePath) {
+  const absolutePath = resolve(rootDir, relativePath);
+
+  if (!existsSync(absolutePath)) {
+    return;
+  }
+
+  const raw = readFileSync(absolutePath, "utf8");
+  const frontmatterMatch = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n/);
+
+  if (!frontmatterMatch) {
+    push("FAIL", relativePath, "missing YAML frontmatter delimited by ---");
+    return;
+  }
+
+  const frontmatter = frontmatterMatch[1];
+  const hasName = /^name:\s+\S+/m.test(frontmatter);
+  const hasDescription = /^description:\s+.+/m.test(frontmatter);
+
+  if (!hasName || !hasDescription) {
+    push("FAIL", relativePath, "frontmatter must include non-empty name and description");
+    return;
+  }
+
+  push("PASS", `${relativePath}#frontmatter`, "valid skill frontmatter");
+}
+
+function validateAgentRole(relativePath) {
+  const absolutePath = resolve(rootDir, relativePath);
+
+  if (!existsSync(absolutePath)) {
+    return;
+  }
+
+  const raw = readFileSync(absolutePath, "utf8");
+  const hasFlatDeveloperInstructions = /^\s*developer_instructions\s*=\s*"""/m.test(raw);
+  const hasNestedInstructionsTable = /^\s*\[instructions\]\s*$/m.test(raw);
+
+  if (hasNestedInstructionsTable) {
+    push("FAIL", relativePath, "agent role must use a flat instructions string, not an [instructions] table");
+    return;
+  }
+
+  if (!hasFlatDeveloperInstructions) {
+    push("FAIL", relativePath, "agent role is missing a flat developer_instructions = \"\"\"...\"\"\" block");
+    return;
+  }
+
+  push("PASS", `${relativePath}#schema`, "uses loader-compatible flat developer_instructions");
 }
 
 function shellWrappedNpx(invocation) {
@@ -43,6 +122,15 @@ function shellWrappedNpx(invocation) {
   }
 
   return ["npx", ["-y", ...invocation.split(" ")]];
+}
+
+function shellWrappedCommand(invocation) {
+  if (process.platform === "win32") {
+    return ["cmd.exe", ["/d", "/s", "/c", invocation]];
+  }
+
+  const [command, ...args] = invocation.split(" ");
+  return [command, args];
 }
 
 async function probeStdioMcp(label, invocation, timeoutMs = 5_000) {
@@ -111,6 +199,14 @@ for (const relativePath of requiredPaths) {
   }
 }
 
+for (const relativePath of requiredSkillPaths) {
+  validateSkillFrontmatter(relativePath);
+}
+
+for (const relativePath of agentRolePaths) {
+  validateAgentRole(relativePath);
+}
+
 const referenceDir = resolve(rootDir, "design-references");
 
 if (existsSync(referenceDir)) {
@@ -150,28 +246,48 @@ if (process.env.GITHUB_TOKEN) {
 }
 
 try {
-  const command = process.platform === "win32" ? "codex.cmd" : "codex";
-  const output = execFileSync(command, ["mcp", "list"], {
+  const [command, args] = shellWrappedCommand("codex mcp list");
+  const output = execFileSync(command, args, {
     cwd: rootDir,
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
   });
 
-  const figmaLine = output
-    .split(/\r?\n/)
-    .find((candidate) => candidate.toLowerCase().includes("figma"));
+  const lines = output.split(/\r?\n/).filter(Boolean);
 
-  if (!figmaLine) {
-    push("WARN", "mcp:figma", "configured in .codex/config.toml but not reported by codex mcp list");
-  } else if (/not logged in/i.test(figmaLine)) {
-    push("WARN", "mcp:figma", "configured but not authenticated");
-  } else if (/\benabled\b/i.test(figmaLine)) {
-    push("PASS", "mcp:figma", "configured and reported by Codex");
-  } else {
-    push("WARN", "mcp:figma", figmaLine.trim());
+  for (const candidate of expectedEnabledMcpServers) {
+    const line = lines.find((entry) => entry.toLowerCase().startsWith(candidate.toLowerCase()));
+
+    if (!line) {
+      push("FAIL", `mcp:${candidate}`, "missing from codex mcp list output");
+      continue;
+    }
+
+    if (!/\benabled\b/i.test(line)) {
+      push("FAIL", `mcp:${candidate}`, `expected enabled, got: ${line.trim()}`);
+      continue;
+    }
+
+    push("PASS", `mcp:${candidate}`, "enabled at the repo layer");
+  }
+
+  for (const candidate of expectedDisabledMcpServers) {
+    const line = lines.find((entry) => entry.toLowerCase().startsWith(candidate.toLowerCase()));
+
+    if (!line) {
+      push("PASS", `mcp:${candidate}`, "not listed as an active repo server");
+      continue;
+    }
+
+    if (/\bdisabled\b/i.test(line)) {
+      push("PASS", `mcp:${candidate}`, "disabled at the repo layer");
+      continue;
+    }
+
+    push("FAIL", `mcp:${candidate}`, `expected disabled for this repo, got: ${line.trim()}`);
   }
 } catch {
-  push("WARN", "mcp:figma", "Codex CLI unavailable; verify Figma login in the Codex app before Figma-driven work");
+  push("WARN", "mcp:list", "Codex CLI unavailable; verify repo MCP overrides in the Codex app");
 }
 
 let hasFailures = false;

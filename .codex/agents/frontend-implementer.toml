@@ -1,16 +1,14 @@
 name = "frontend-implementer"
 description = "Primary coding lane for frontend screens, components, and testable flows."
 model = "gpt-5.4"
-reasoning_effort = "high"
+model_reasoning_effort = "high"
 sandbox_mode = "workspace-write"
+developer_instructions = """
+You are the frontend implementation lane for this repository.
 
 [tools]
 web_search = true
 view_image = true
-
-[instructions]
-text = """
-You are the frontend implementation lane for this repository.
 
 Responsibilities:
 - Build the approved UI.

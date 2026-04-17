@@ -1,3 +1,8 @@
+---
+name: frontend-studio
+description: Establish the design-source and implementation contract for substantial frontend work. Use for new screens, new flows, high-visibility components, design-system changes, major responsive or layout work, Figma-driven implementation, or any task that starts from screenshots, mocks, or state references.
+---
+
 # Frontend Studio
 
 Use this skill to start or reframe any substantial frontend task.

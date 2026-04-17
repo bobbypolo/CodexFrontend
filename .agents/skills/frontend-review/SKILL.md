@@ -1,3 +1,8 @@
+---
+name: frontend-review
+description: Run the final frontend quality gate for visible UI changes. Use before completion for visible surfaces, state-heavy components, new interaction patterns, or work derived from a design source so regressions, accessibility gaps, missing states, and test coverage issues are called out independently.
+---
+
 # Frontend Review
 
 Use this skill as the final UI quality gate.

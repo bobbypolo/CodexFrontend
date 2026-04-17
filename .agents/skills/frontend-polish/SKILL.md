@@ -1,3 +1,8 @@
+---
+name: frontend-polish
+description: Apply narrow frontend visual refinement only. Use for small spacing, hierarchy, alignment, or motion adjustments that should stay localized and should not expand into broader architecture or implementation changes.
+---
+
 # Frontend Polish
 
 Use this skill only for narrow visual refinement loops.

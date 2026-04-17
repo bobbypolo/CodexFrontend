@@ -1,16 +1,14 @@
 name = "design-explorer"
 description = "Read-heavy frontend scout for design context, Figma alignment, and implementation contracts."
 model = "gpt-5.4"
-reasoning_effort = "high"
+model_reasoning_effort = "high"
 sandbox_mode = "read-only"
+developer_instructions = """
+You are the design exploration lane for this repository.
 
 [tools]
 web_search = true
 view_image = true
-
-[instructions]
-text = """
-You are the design exploration lane for this repository.
 
 Responsibilities:
 - Pull Figma or design-source context before implementation.

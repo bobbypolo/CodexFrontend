@@ -58,8 +58,9 @@ The Codex app action bar is wired with:
 
 ## MCP expectations
 
-The repo-level Codex config scopes the MCP servers that matter for this
-frontend workflow:
+The repo-level Codex config explicitly enables the MCP servers that matter for this
+frontend workflow and disables unrelated global servers that may exist in your
+home Codex config:
 
 - `figma`
 - `github`
@@ -67,6 +68,12 @@ frontend workflow:
 - `shadcn`
 - `playwright`
 - `chrome_devtools`
+
+Figma-driven work requires a local OAuth session:
+
+```bash
+codex mcp login figma
+```
 
 Optional servers are present but disabled by default:
 
@@ -100,6 +107,33 @@ Useful commands:
 pnpm run test:e2e:visual
 pnpm run test:e2e:performance
 ```
+
+## Deploying To Other Projects
+
+Use this repository as the source-of-truth workflow and apply it onto another
+project root by path:
+
+```bash
+pnpm run workflow:deploy -- --target F:\Path\To\YourProject
+pnpm run workflow:update -- --target F:\Path\To\YourProject
+```
+
+Add `--dry-run` to preview changes and `--install` to run the target project's
+package-manager install after `package.json` changes. The target path must
+already be a project root with `package.json`.
+
+Ownership rules:
+
+- `workflow:update` overwrites managed workflow internals such as `.codex/**`,
+  `.agents/skills/**`, `scripts/bootstrap-workflow.mjs`,
+  `scripts/workflow-doctor.mjs`, and
+  `.github/workflows/frontend-verification.yml`.
+- `workflow:update` does not overwrite scaffold-only files that projects are
+  expected to customize, including `AGENTS.md`, `DESIGN.md`,
+  `.storybook/main.ts`, `.storybook/preview.ts`, `playwright.config.ts`,
+  `stories/**`, and `tests/**`.
+- Scaffold-only files are copied only when missing, unless
+  `--force-scaffolds` is passed intentionally.
 
 Supported Playwright overrides:
 

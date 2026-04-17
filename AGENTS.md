@@ -32,7 +32,7 @@ Use `$frontend-polish` only for:
 
 ## Design Source Order
 
-1. If a live Figma source exists, pull Figma MCP context first.
+1. If a live Figma source exists and the local Figma MCP session is enabled and authenticated, pull Figma MCP context first.
 2. For visible UI work, capture reference inputs before coding:
    - desktop and mobile screenshots where available
    - at least one loading, empty, or error reference if the flow has those states

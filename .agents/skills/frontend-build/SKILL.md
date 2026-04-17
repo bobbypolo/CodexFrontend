@@ -1,3 +1,8 @@
+---
+name: frontend-build
+description: Implement approved frontend direction for visible UI work. Use when the visual direction is already approved and the task is primarily execution, including shared-component work that needs Storybook stories, state coverage, or Playwright coverage.
+---
+
 # Frontend Build
 
 Use this skill when the direction is approved and the task is implementation.
